@@ -13,6 +13,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   int get rowCount => rows;
   int get columnCount => columns;
 
+  int generationCount;
+
   @override
   GameState get initialState => GetGameConfig();
 
@@ -21,7 +23,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (event is Create) {
       rows = event.rows;
       columns = event.columns;
+      generationCount = 0;
       yield* _calculateMap();
+    } else if (event is StopGame) {
+      yield GetGameConfig();
+    } else if (event is NextPressed){
+      yield* _calculateNext();
     }
   }
 
@@ -36,5 +43,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
     }
     yield GetStartCondition();
+  }
+
+  Stream<GameState> _calculateNext() async* {
+    //TODO: Implement the logic
   }
 }

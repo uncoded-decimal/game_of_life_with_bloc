@@ -1,4 +1,3 @@
-import 'package:bidirectional_scroll_view/bidirectional_scroll_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_of_life/constants.dart';
@@ -26,8 +25,8 @@ class _GameInputScreenState extends State<GameInputScreen> {
   void _calculateRects() {
     bloc.positions.forEach((position) {
       //construct a Rect and then add it to the map
-      final rect = Rect.fromLTWH(
-          position.dx, position.dy, Constants.cellWidth, Constants.cellHeight);
+      final rect = Rect.fromLTWH(position.dx + 20, position.dy + 20,
+          Constants.cellWidth, Constants.cellHeight);
       _cells[rect] = false;
     });
     setState(() {});
@@ -37,68 +36,80 @@ class _GameInputScreenState extends State<GameInputScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      body: Container(
-        margin: EdgeInsets.fromLTRB(10, 10, 10, 30),
-        padding: EdgeInsets.all(5.0),
-        decoration: BoxDecoration(
-            color: Colors.yellow,
-            borderRadius: BorderRadius.circular(20.0),
-            border: Border.all(width: 5.0, color: Colors.blue)),
-        foregroundDecoration: BoxDecoration(
-            // color: Colors.yellow,
-            borderRadius: BorderRadius.circular(20.0),
-            border: Border.all(width: 5.0, color: Colors.blue)),
-        child: BidirectionalScrollViewPlugin(
-          scrollOverflow: Overflow.clip,
-          child: GestureDetector(
-            onTapDown: (tapDetails) {
-              //Get the [RenderBox] for the part of screen
-              //available for tapping
-              RenderBox boxscreen = context.findRenderObject();
-              //From [tapDetails] get the global position of tap
-              //and convert it to get the local position inside
-              //the [RenderBox]
-              final offset = boxscreen.globalToLocal(tapDetails.globalPosition);
-              //iterates through [_cells]' [keys] to check which [RenderBox]
-              //laid surrounds the tapped point and returns
-              //its index
-              final box = _cells.keys.toList().lastWhere(
-                  (localRect) => localRect.contains(offset),
-                  orElse: () => null);
-              _onSelect(box);
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: CustomPaint(
-                size: Size(
-                  bloc.rowCount * Constants.cellWidth +
-                      (bloc.rowCount - 1) * Constants.cellSpace,
-                  bloc.columnCount * Constants.cellHeight +
-                      (bloc.columnCount - 1) * Constants.cellSpace,
+      body: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: size.width - 20,
+              constraints: BoxConstraints(
+                  minHeight: size.height / 2, maxHeight: size.height - 100),
+              padding: EdgeInsets.all(5.0),
+              decoration: BoxDecoration(
+                  color: Colors.yellow,
+                  borderRadius: BorderRadius.circular(20.0),
+                  border: Border.all(width: 5.0, color: Colors.blue)),
+              foregroundDecoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20.0),
+                  border: Border.all(width: 5.0, color: Colors.blue)),
+              child: GestureDetector(
+                onTapDown: (tapDetails) => _onSelect(tapDetails),
+                child: CustomPaint(
+                  size: Size(
+                    bloc.rowCount * Constants.cellWidth +
+                        (bloc.rowCount - 1) * Constants.cellSpace +
+                        40,
+                    bloc.columnCount * Constants.cellHeight +
+                        (bloc.columnCount - 1) * Constants.cellSpace +
+                        40,
+                  ),
+                  painter: GamePainter(map: _cells),
+                  willChange: true,
                 ),
-                painter: GamePainter(map: _cells),
-                willChange: true,
               ),
             ),
           ),
-        ),
+          _buttonBar()
+        ],
       ),
     );
   }
 
   //redraw the entire widget because a cell state has
   //been changed
-  void _onSelect(Rect box) =>
-      //one-tap to add cell to alive list
-      //another to remove it
-      setState(() {
-        _cells.update(box, (x) => !x);
-      });
-
-  @override
-  void dispose() {
-    //closing the bloc is necessary to avoid memory leaks
-    bloc.close();
-    super.dispose();
+  void _onSelect(TapDownDetails tapDetails) {
+    //iterates through [_cells]' [keys] to check which [RenderBox]
+    //laid surrounds the tapped point and returns the appropriate Rect
+    final box = _cells.keys
+        // .toList()
+        .lastWhere((localRect) => localRect.contains(tapDetails.localPosition),
+            orElse: () => null);
+    //one-tap to add cell to alive list
+    //another to remove it
+    setState(() {
+      _cells.update(box, (x) => !x);
+    });
   }
+
+  Widget _buttonBar() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          FloatingActionButton(
+            onPressed: () => bloc.add(StopGame()),
+            heroTag: 'back_button',
+            child: Icon(Icons.stop),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          FloatingActionButton(
+            onPressed: () => bloc.add(NextPressed(_cells)),
+            heroTag: 'next_button',
+            child: Icon(Icons.navigate_next),
+          ),
+        ],
+      );
 }

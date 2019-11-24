@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:game_of_life/constants.dart';
 
+//TODO: Implement drag
 class GamePainter extends CustomPainter {
   final Map<Rect, bool> map;
   GamePainter({
