@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 
 class GameState extends Equatable {
@@ -13,3 +12,8 @@ class GetStartCondition extends GameState {
 }
 
 class NextState extends GameState {}
+
+class GameEnd extends GameState {
+  final String message;
+  GameEnd({this.message});
+}

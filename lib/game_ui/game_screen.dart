@@ -17,14 +17,17 @@ class _GameScreenState extends State<GameScreen> {
         backgroundColor: Colors.cyan,
         body: BlocBuilder<GameBloc, GameState>(
           builder: (BuildContext context, GameState state) {
-            if (state is GetGameConfig)
+            if (state is GetGameConfig) {
               return GamePlot();
-            else if (state is GetStartCondition)
+            } else if (state is GetStartCondition) {
               return GameInputScreen();
-            else
+            } else if (state is NextState) {
+              return GameOutputScreen();
+            } else {
               return Container(
                 color: Colors.blue,
               );
+            }
           },
         ),
       ),
